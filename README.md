@@ -8,7 +8,7 @@
 
 A Chrome extension for University of Waterloo co-op students.
 
-[Chrome Web Store](https://chromewebstore.google.com/detail/watsworthit/emflchjfgkaphaafpfghkalbkmhiaccm) &nbsp;·&nbsp; [Website](https://watsworthit.ugmi.ca) &nbsp;·&nbsp; [Privacy policy](https://watsworthit.ugmi.ca/privacy/)
+[Chrome Web Store](https://chromewebstore.google.com/detail/watsworthit/emflchjfgkaphaafpfghkalbkmhiaccm) &nbsp;·&nbsp; [Website](https://watwages.ugmi.ca) &nbsp;·&nbsp; [Privacy policy](https://watwages.ugmi.ca/privacy/)
 
 ![manifest v3](https://img.shields.io/badge/Chrome-Manifest_V3-3355FF?style=flat-square&labelColor=1D1147)
 ![license](https://img.shields.io/badge/license-source_available-3355FF?style=flat-square&labelColor=1D1147)
@@ -61,7 +61,7 @@ This repo is public so you can read exactly what the extension does in your Wate
 - The postings it reads, your marks and your settings are saved in your browser's extension storage on your own computer. There's no account and no server of its own.
 - The only thing it sends anywhere is an anonymous count: when it's installed, when it reads a job board, when you mark a posting, once a day when you use it, and once a day if WaterlooWorks changes its page and the extension can't read it. Each one carries a random install ID, the version number, the install date and your browser's language setting, never anything about a posting, a search or a setting. That code is in [`extension/src/background.js`](extension/src/background.js).
 
-The full policy is at [watsworthit.ugmi.ca/privacy](https://watsworthit.ugmi.ca/privacy/).
+The full policy is at [watwages.ugmi.ca/privacy](https://watwages.ugmi.ca/privacy/).
 
 ## Running it from this repo
 

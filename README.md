@@ -2,7 +2,7 @@
 
 <img src="docs/media/mark.png" width="96" alt="">
 
-# WatsWorthIt &nbsp;<a href="https://chromewebstore.google.com/detail/watsworthit/emflchjfgkaphaafpfghkalbkmhiaccm"><img src="https://img.shields.io/badge/Chrome%20Web%20Store-Add%20to%20Chrome-3355FF?style=flat-square&labelColor=1D1147&logo=googlechrome&logoColor=white" alt="Add to Chrome from the Chrome Web Store"></a>
+# WatWages &nbsp;<a href="https://chromewebstore.google.com/detail/watsworthit/emflchjfgkaphaafpfghkalbkmhiaccm"><img src="https://img.shields.io/badge/Chrome%20Web%20Store-Add%20to%20Chrome-3355FF?style=flat-square&labelColor=1D1147&logo=googlechrome&logoColor=white" alt="Add to Chrome from the Chrome Web Store"></a>
 
 **Pay per hour and applicants per opening for every WaterlooWorks posting, on one sortable page.**
 
@@ -19,7 +19,7 @@ A Chrome extension for University of Waterloo co-op students.
 
 ## What it does
 
-- WaterlooWorks only shows pay at the bottom of each posting. WatsWorthIt reads every posting in your search results and puts its hourly pay in CAD on the results page, along with how many people applied per opening.
+- WaterlooWorks only shows pay at the bottom of each posting. WatWages reads every posting in your search results and puts its hourly pay in CAD on the results page, along with how many people applied per opening.
 - Pay listed in USD, or per day, week, month or year, is converted to an hourly CAD rate. Hover over a number to see the sentence in the posting it came from.
 - Each job gets an ROI score out of 100 that weighs the pay against your odds of getting in. The score goes down when a posting asks for a higher year of study than you have, and later roles from the same company score a little lower so one employer doesn't fill the top of your list.
 - You can sort by pay, applicants per opening or ROI. Clicking a posting opens it in a side panel with how many co-op students that employer hired in past terms and which programs they came from.
@@ -50,7 +50,7 @@ The screenshots use made up companies and postings.
 
 ## Install
 
-Install WatsWorthIt from the [Chrome Web Store](https://chromewebstore.google.com/detail/watsworthit/emflchjfgkaphaafpfghkalbkmhiaccm). Then sign in to WaterlooWorks and open a job search, and the extra columns fill in as each posting is read.
+Install WatWages from the [Chrome Web Store](https://chromewebstore.google.com/detail/watsworthit/emflchjfgkaphaafpfghkalbkmhiaccm). Then sign in to WaterlooWorks and open a job search, and the extra columns fill in as each posting is read.
 
 ## What it does with your data
 
@@ -75,6 +75,6 @@ The code is here to read, and you can use the extension for your own job search.
 
 ---
 
-WatsWorthIt is not affiliated with or endorsed by the University of Waterloo.
+WatWages is not affiliated with or endorsed by the University of Waterloo.
 
 Made by Eric Zou. Questions go to [eric@ugmi.ca](mailto:eric@ugmi.ca).

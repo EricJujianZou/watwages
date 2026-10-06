@@ -541,7 +541,7 @@ export async function fetchListingRows(board, opts = {}) {
     const pageRows = extractListingRows(json);
     if (pageRows == null) {
       if (page === 1 && typeof console !== 'undefined') {
-        console.warn('WatsWorthIt: the results list came back in a shape it does not recognise. Top-level fields:', json && typeof json === 'object' ? Object.keys(json) : typeof json);
+        console.warn('WatWages: the results list came back in a shape it does not recognise. Top-level fields:', json && typeof json === 'object' ? Object.keys(json) : typeof json);
       }
       return page === 1 ? null : rows;
     }
@@ -549,7 +549,7 @@ export async function fetchListingRows(board, opts = {}) {
     if (page === 1 && typeof console !== 'undefined') {
       const first = findRowArray(json, 0)[0];
       if (first && pageRows[0] && (!pageRows[0].title || !pageRows[0].org)) {
-        console.warn('WatsWorthIt: listing rows are missing a title or organization. First row:', JSON.stringify(first).slice(0, 800));
+        console.warn('WatWages: listing rows are missing a title or organization. First row:', JSON.stringify(first).slice(0, 800));
       }
     }
     const fresh = pageRows.filter((row) => !seen.has(row.jobId));

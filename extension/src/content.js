@@ -466,7 +466,7 @@ async function mount(board) {
   }
   if (!table) listingFallbackTried = true;
 
-  showNotice('Loading WatsWorthIt.');
+  showNotice('Loading WatWages.');
   const { rows, source } = await readBoardRows(table, board);
   if (!rows) {
     reportStatus('unreadable');
@@ -588,7 +588,7 @@ async function boot() {
     showNotice('Loading all jobs from WaterlooWorks.');
   } else if (!ww.findResultsTable()) {
     showNotice(bootAttempts >= BOOT_MAX_ATTEMPTS
-      ? "WatsWorthIt couldn't open by itself. Click All Jobs and it will open."
+      ? "WatWages couldn't open by itself. Click All Jobs and it will open."
       : 'Waiting for WaterlooWorks to show job results.');
   }
   const mounted = await mount(board);

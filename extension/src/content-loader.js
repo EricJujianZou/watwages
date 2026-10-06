@@ -14,11 +14,11 @@
     report('starting');
     var url = chrome.runtime.getURL('src/content.js');
     import(url).catch(function (err) {
-      console.error('WatsWorthIt: failed to load content.js', err);
+      console.error('WatWages: failed to load content.js', err);
       report('failed');
     });
   } catch (err) {
-    console.error('WatsWorthIt: content-loader failed', err);
+    console.error('WatWages: content-loader failed', err);
     report('failed');
   }
 })();

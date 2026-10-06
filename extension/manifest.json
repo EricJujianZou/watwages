@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "WatsWorthIt",
+  "name": "WatWages",
   "description": "Puts the pay and applicants per opening for every WaterlooWorks posting on one sortable page. Not affiliated with UWaterloo.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",

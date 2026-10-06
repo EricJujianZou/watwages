@@ -4,9 +4,9 @@
 // here is also what the popup shows the moment it opens, before it has
 // heard any live status message of its own.
 
-const NOT_RESULTS_TEXT = 'Open a WaterlooWorks job board to see WatsWorthIt.';
-const PAGE_CHANGED_TEXT = "WaterlooWorks changed its page and WatsWorthIt can't read this table.";
-const OFF_TEXT = "WatsWorthIt is turned off for this tab.";
+const NOT_RESULTS_TEXT = 'Open a WaterlooWorks job board to see WatWages.';
+const PAGE_CHANGED_TEXT = "WaterlooWorks changed its page and WatWages can't read this table.";
+const OFF_TEXT = "WatWages is turned off for this tab.";
 
 const BADGE = {
   starting: { text: '...', color: '#6b736e' },

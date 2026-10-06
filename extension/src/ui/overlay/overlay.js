@@ -1,4 +1,4 @@
-// WatsWorthIt overlay. Ported from the approved design
+// WatWages overlay. Ported from the approved design
 // (see docs/build-contract-v2.md, "Product changes from the approved
 // design"). This is the only file that assembles the overlay's DOM; it
 // renders into a shadow root on the host element passed in, and talks to
@@ -1223,7 +1223,7 @@ function shellHTML() {
   ${railHTML()}
   <main>
     <div class="top">
-      <h1>WaterlooWorks via WatsWorthIt</h1>
+      <h1>WaterlooWorks via WatWages</h1>
       <div class="right">
         <div class="views glass" role="group" aria-label="View" id="views"></div>
         <button class="theme glass" id="themeBtn" type="button"><span class="knob" id="themeKnob"></span><span id="themeLbl"></span></button>
@@ -1273,9 +1273,9 @@ function shellHTML() {
 
 function railHTML() {
   return `
-<nav class="rail" aria-label="WatsWorthIt">
+<nav class="rail" aria-label="WatWages">
   <div class="rail-inner glass" id="railInner">
-    <div class="mark"><b><img src="${LOGO_URL}" alt=""></b><span class="lbl">WatsWorthIt</span></div>
+    <div class="mark"><b><img src="${LOGO_URL}" alt=""></b><span class="lbl">WatWages</span></div>
     <a href="#" data-nav="home" id="navHome"><svg class="i"><use href="#i-home"/></svg><span class="lbl">Home</span></a>
     <a href="#" data-nav="full" id="navFull"><svg class="i"><use href="#i-cycle"/></svg><span class="lbl">Full-Cycle Service</span></a>
     <a href="#" data-nav="direct" id="navDirect"><svg class="i"><use href="#i-case"/></svg><span class="lbl">Employer Student Direct</span></a>

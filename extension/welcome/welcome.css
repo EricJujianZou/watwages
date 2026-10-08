@@ -1,0 +1,229 @@
+/* First-run tab, opened once on install. Light only, since the goose is drawn in black and disappears on a dark ground. Sends people to the WaterlooWorks job board, where the table does its work. */
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("../fonts/bricolage-latin-opsz-wght.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Figtree";
+  src: url("../fonts/figtree-latin-wght.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+:root {
+  color-scheme: light;
+  --ground: #eeeaff;
+  --ink: #1d1147;
+  --ink-soft: #4a3f78;
+  --sheet: #ffffff;
+  --rule: rgba(29, 17, 71, 0.12);
+  --rule-strong: rgba(29, 17, 71, 0.2);
+  /* Colors match watwages.ugmi.ca. */
+  --pink: #d81b60;
+  --pink-press: #b8154f;
+  --on-pink: #ffffff;
+  --blue: #3355ff;
+  --goose-body: #a8927a;
+  --goose-wing: #7a6552;
+  --goose-black: #17131f;
+  --goose-line: #1d1147;
+  --goose-white: #fffaf4;
+  --font: "Figtree", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --font-display: "Bricolage Grotesque", "Figtree", "Segoe UI", system-ui, sans-serif;
+}
+
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font);
+  overflow-x: hidden;
+}
+
+.page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+  align-items: center;
+  gap: clamp(24px, 4vw, 64px);
+  max-width: 1280px;
+  margin-inline: auto;
+  padding: clamp(48px, 10vh, 120px) clamp(16px, 5vw, 80px);
+}
+
+.spot {
+  position: relative;
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  padding-left: 0;
+}
+
+h1 u {
+  color: var(--blue);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.12em;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.9rem, 1.1rem + 2.6vw, 2.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin: 0 0 clamp(18px, 3vh, 28px);
+  max-width: 17ch;
+}
+
+.cta {
+  display: inline-block;
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.05rem, 0.9rem + 0.5vw, 1.25rem);
+  color: var(--on-pink);
+  background: var(--pink);
+  border: 1.5px solid var(--ink);
+  padding: 18px 34px;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  cursor: pointer;
+  box-shadow: 5px 5px 0 var(--ink);
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 140ms cubic-bezier(0.16, 1, 0.3, 1), background 140ms;
+}
+.cta:hover {
+  background: var(--pink-press);
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 var(--ink);
+}
+.cta:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.cta:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 4px;
+}
+
+
+/* The goose is the one from watwages.ugmi.ca, scaled up, saying the congrats line. */
+.goose-row {
+  align-self: center;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  min-width: 0;
+}
+.bubble {
+  position: relative;
+  min-width: 0;
+  max-width: 11ch;
+  margin: 0 0 clamp(80px, 11vw, 150px);
+  padding: 0.35em 0.5em 0.4em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 0.8rem + 3.2vw, 3.75rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  background: var(--sheet);
+  border: 3px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 5px 5px 0 var(--ink);
+}
+.bubble::after {
+  content: "";
+  position: absolute;
+  right: -14px;
+  bottom: 22px;
+  width: 22px;
+  height: 22px;
+  background: var(--sheet);
+  border-right: 3px solid var(--ink);
+  border-top: 3px solid var(--ink);
+  transform: rotate(45deg);
+}
+.bubble span {
+  /* Same pink squiggle as the highlighted words in the website's headline. */
+  color: var(--blue);
+  padding-bottom: 0.1em;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 30' preserveAspectRatio='none'%3E%3Cpath d='M4 20 C 60 8, 120 26, 180 14 S 270 10, 296 18' fill='none' stroke='%23d81b60' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E") left bottom / 100% 0.22em no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.goose-btn {
+  flex: none;
+  width: clamp(120px, 13vw, 200px);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.goose-btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
+.goose { display: block; width: 100%; height: auto; overflow: visible; }
+.goose .gneck, .goose .jaw, .goose .upper, .goose .gbody, .goose .wing, .goose .eye { transform-box: view-box; }
+.goose .gneck { transform-origin: 92px 168px; }
+.goose .jaw { transform-origin: 46px 65px; }
+.goose .upper { transform-origin: 46px 62px; }
+.goose .wing { transform-origin: 118px 162px; }
+.goose .gbody { animation: idle 3.2s ease-in-out infinite; }
+.goose .eye { transform-origin: 55px 55px; animation: blink 5s infinite; }
+.goose.talk .wing { animation: flap 0.36s ease-in-out infinite; }
+.goose.talk .jaw { animation: jaw 0.3s ease-in-out infinite; }
+.goose.talk .upper { animation: upper 0.3s ease-in-out infinite; }
+.goose.talk .gneck { animation: bob 0.6s ease-in-out infinite; }
+@keyframes idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
+@keyframes flap { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-22deg); } }
+@keyframes jaw { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-24deg); } }
+@keyframes upper { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(8deg); } }
+@keyframes bob { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-4deg); } }
+.money {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta { transition: none; }
+  .goose .gbody, .goose .eye { animation: none; }
+}
+
+@media (max-width: 760px) {
+  .page { grid-template-columns: 1fr; }
+  .spot { justify-self: end; }
+  .goose-row { justify-self: start; }
+  .bubble { font-size: clamp(2rem, 1rem + 5vw, 3rem); }
+}
+
+@media (max-width: 560px) {
+  .spot { justify-self: center; }
+  .goose-row { justify-self: center; gap: 8px; }
+  .bubble { margin-bottom: 72px; border-width: 2.5px; }
+  .goose-btn { width: 110px; }
+  .page { justify-content: center; }
+  .spot {
+    align-items: center;
+    text-align: center;
+    padding-left: 0;
+  }
+  h1 {
+    max-width: 20ch;
+    font-size: clamp(1.7rem, 1.3rem + 3vw, 2.2rem);
+  }
+}

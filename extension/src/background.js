@@ -165,5 +165,8 @@ function countBoardRead(tabId) {
 }
 
 chrome.runtime.onInstalled.addListener((details) => {
-  if (details.reason === 'install') sendUsage('install');
+  if (details.reason === 'install') {
+    sendUsage('install');
+    chrome.tabs.create({ url: chrome.runtime.getURL('welcome/welcome.html') });
+  }
 });

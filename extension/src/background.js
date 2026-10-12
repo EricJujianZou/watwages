@@ -65,10 +65,11 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   boardReadTabs.delete(tabId);
 });
 
-// Anonymous usage counts, sent to Umami so we can see how many students
-// install WatsWorthIt and whether they keep using it. Every event carries a
-// random install ID, the version, the install date and how many days old the
-// install is. Nothing about a posting, a search or a setting is ever sent.
+// Anonymous usage counts, sent to Eric's own analytics server so we can see
+// how many students install WatsWorthIt and whether they keep using it.
+// Every event carries a random install ID, the version, the install date and
+// how many days old the install is. Nothing about a posting, a search or a
+// setting is ever sent.
 //
 //   install      once, when Chrome installs the extension
 //   board-read   the overlay finished reading a job board, once per tab
@@ -83,8 +84,10 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 // Only Chrome Web Store installs send anything, so development installs from
 // an unpacked folder stay out of the counts.
 
-const UMAMI_URL = 'https://cloud.umami.is/api/send';
-const UMAMI_WEBSITE_ID = 'c9457f22-f5b9-4a4e-b954-41e8c5b159f2';
+const UMAMI_URL = 'https://analytics.ugmi.ca/api/send';
+// Self-hosted Umami, shared with ugmi.ca. Filter by the hostname below.
+const UMAMI_WEBSITE_ID = 'de5ddce2-33c7-4dfe-a8c6-f36fc16a0cb4';
+const HOSTNAME = 'watwages-extension';
 const boardReadTabs = new Set();
 
 function fromStore() {
@@ -123,9 +126,9 @@ async function sendUsage(name, extra = {}) {
         type: 'event',
         payload: {
           website: UMAMI_WEBSITE_ID,
-          hostname: 'watsworthit-extension',
+          hostname: HOSTNAME,
           url: '/extension',
-          title: 'WatsWorthIt extension',
+          title: 'WatWages extension',
           language: navigator.language,
           name,
           id: installId,

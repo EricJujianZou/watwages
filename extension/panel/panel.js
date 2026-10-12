@@ -12,8 +12,8 @@ const DEFAULT_PROFILE = { program: '', term: TERMS[0], completedWorkTerms: 0 };
 const FULL_CYCLE_URL = 'https://waterlooworks.uwaterloo.ca/myAccount/co-op/full/jobs.htm';
 const WATERLOOWORKS_MATCH = 'https://waterlooworks.uwaterloo.ca/*';
 
-const LOOK_LABEL_ON = "Don't like the new look? Change it back";
-const LOOK_LABEL_OFF = 'Want the new look again? Turn it back on';
+const LOOK_LABEL_ON = 'Use the original WaterlooWorks';
+const LOOK_LABEL_OFF = 'Switch to the WatWages look';
 
 let settings = { overlayEnabled: true, weights: { ...DEFAULT_WEIGHTS } };
 let profile = { ...DEFAULT_PROFILE };

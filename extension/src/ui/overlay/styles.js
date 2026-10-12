@@ -108,6 +108,8 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .views button[aria-pressed="true"]{background:var(--plate); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.14)}
 .views .n{font-size:12px; font-weight:600; color:var(--ink3)}
 .top .right{margin-left:auto; display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; min-width:0; max-width:100%}
+.orig{border:0; border-radius:999px; padding:13px 16px; line-height:16px; font-size:13px; font-weight:600; color:var(--ink)}
+.orig:hover{background:var(--row-hover)}
 .theme{display:inline-flex; align-items:center; gap:8px; border:0; border-radius:999px; padding:8px 14px 8px 10px; font-size:13px; font-weight:600; color:var(--ink)}
 .theme .knob{display:grid; place-items:center; width:26px; height:26px; border-radius:50%; background:var(--plate); box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .theme .knob svg{width:16px; height:16px}
@@ -126,6 +128,7 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .search kbd{font:600 11px var(--font); color:var(--ink3); border:1px solid var(--line2); border-radius:6px; padding:2px 6px}
 .btn{display:inline-flex; align-items:center; gap:8px; border:0; border-radius:12px; padding:10px 14px; font-weight:600; font-size:14px; background:var(--plate); box-shadow:inset 0 0 0 1px var(--plate-edge); white-space:nowrap; text-decoration:none; color:var(--ink)}
 .btn:hover{background:var(--row-hover)}
+.btn[hidden]{display:none}
 .btn.dark{background:var(--ink); color:var(--env); box-shadow:none}
 .btn.gold{background:var(--gold); color:#15171C; box-shadow:inset 0 -1px 0 rgba(0,0,0,.15)}
 .btn.gold:hover{background:#FFD23A}

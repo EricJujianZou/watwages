@@ -13,6 +13,7 @@
 // instead. Correct this the first time a real posting overview is read.
 
 import { mapRatingReport, readRating } from './ww.js';
+import { decodeEntities } from '../parse/entities.js';
 
 const COMPANY_FIELD_PATTERN = /company|organization|division|employer|website|address/i;
 
@@ -22,12 +23,7 @@ function normalizeHtml(input) {
     t = t.replace(/<(?:br|\/p|\/div|\/li|\/tr|\/td|\/th|\/h[1-6]|\/dt|\/dd|\/section)\b[^>]*>/gi, '\n');
     t = t.replace(/<[^>]*>/g, '');
   }
-  t = t
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&eacute;/gi, 'é')
-    .replace(/&#43;/g, '+')
-    .replace(/&#35;/g, '#');
+  t = decodeEntities(t);
   t = t.replace(/ /g, ' ');
   t = t.replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
   t = t.replace(/[ \t]+/g, ' ');

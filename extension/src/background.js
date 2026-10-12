@@ -46,7 +46,11 @@ function titleFor(status, detail, tabId) {
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (!msg || msg.tag !== 'wmj') return;
   if (msg.type === 'usage') {
-    if (msg.name === 'mark') sendUsage('mark', { kind: String((msg.extra && msg.extra.kind) || '') });
+    const extra = msg.extra || {};
+    if (msg.name === 'mark') sendUsage('mark', { kind: String(extra.kind || '') });
+    if (msg.name === 'latest_filters') sendUsage('latest-filters');
+    if (msg.name === 'advanced_filters') sendUsage('advanced-filters', { found: Boolean(extra.found) });
+    if (msg.name === 'original_look') sendUsage('original-look', { from: String(extra.from || '') });
     return;
   }
   if (msg.type !== 'status') return;
@@ -80,6 +84,10 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 //   mark         the student marked a posting Interested or Applied
 //   page-broken  at most once per day, when WaterlooWorks changed its page and
 //                the extension can't read it
+//   latest-filters    the student put their last WaterlooWorks search back
+//   advanced-filters  the student opened WaterlooWorks' filter popup from the
+//                     overlay; found is false when its button wasn't on the page
+//   original-look     the student switched back to the original WaterlooWorks
 //
 // Only Chrome Web Store installs send anything, so development installs from
 // an unpacked folder stay out of the counts.

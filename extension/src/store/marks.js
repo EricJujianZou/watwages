@@ -114,3 +114,30 @@ export async function deleteSearch(name) {
   }
   return next;
 }
+
+/**
+ * The last WaterlooWorks search with any filter or keyword in it, per board,
+ * so the student can put it back after logging out or switching looks.
+ */
+export async function getLatestFilters(board) {
+  let all = null;
+  if (hasChromeStorage()) {
+    const result = await new Promise((resolve) => chrome.storage.local.get(STORAGE_KEYS.latestFilters, resolve));
+    all = result[STORAGE_KEYS.latestFilters];
+  } else {
+    all = memoryState.latestFilters;
+  }
+  const entry = all && typeof all === 'object' ? all[board] : null;
+  return entry && (entry.filters || entry.keyword) ? entry : null;
+}
+
+export async function setLatestFilters(board, search) {
+  const entry = { filters: search.filters || null, keyword: search.keyword || '', savedAt: Date.now() };
+  if (hasChromeStorage()) {
+    const result = await new Promise((resolve) => chrome.storage.local.get(STORAGE_KEYS.latestFilters, resolve));
+    const all = { ...(result[STORAGE_KEYS.latestFilters] || {}), [board]: entry };
+    await new Promise((resolve) => chrome.storage.local.set({ [STORAGE_KEYS.latestFilters]: all }, resolve));
+  } else {
+    memoryState.latestFilters = { ...(memoryState.latestFilters || {}), [board]: entry };
+  }
+}

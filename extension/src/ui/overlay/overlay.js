@@ -74,7 +74,8 @@ export function createOverlay(host, api) {
   const searchInputEl = appEl.querySelector('#q');
   const searchesBtnEl = appEl.querySelector('#searchesBtn');
   const advBtnEl = appEl.querySelector('#advBtn');
-  const advCountEl = appEl.querySelector('#advCount');
+  const latestBtnEl = appEl.querySelector('#latestBtn');
+  const origBtnEl = appEl.querySelector('#origBtn');
   const chipsEl = appEl.querySelector('#chips');
   const rescountEl = appEl.querySelector('#rescount');
   const progEl = appEl.querySelector('#prog');
@@ -269,6 +270,7 @@ export function createOverlay(host, api) {
       <button type="button" class="chip pill ${f.isNew ? 'on' : ''}" data-toggle="isNew" aria-pressed="${f.isNew}">New</button>
       <button type="button" class="chip ${f.disc.size ? 'on' : ''}" data-pop="disc">Targeted Degrees${f.disc.size ? `<span class="val">: ${esc(chipVal(f.disc))}</span>` : ''}${icon('down')}</button>
       <button type="button" class="chip ${f.arr.size ? 'on' : ''}" data-pop="arr">Employment Location Arrangement${f.arr.size ? `<span class="val">: ${esc(chipVal(f.arr))}</span>` : ''}${icon('down')}</button>
+      <button type="button" class="chip ${advCount() ? 'on' : ''}" data-pop="advanced">Pay and Deadline${advCount() ? `<span class="val">: ${advCount()} set</span>` : ''}${icon('down')}</button>
       <button type="button" class="chip ${f.apr ? 'on' : ''}" data-pop="apr">Applications per Role${f.apr ? `<span class="val">: ${esc(APR_BUCKETS.find((b) => b.key === f.apr).label)}</span>` : ''}${icon('down')}</button>
       <span class="fsep" aria-hidden="true"></span>
       <button type="button" class="chip pill ${f.noCover ? 'on' : ''}" data-toggle="noCover" aria-pressed="${f.noCover}">${icon('doc')}No cover letter</button>
@@ -324,7 +326,7 @@ export function createOverlay(host, api) {
     const levels = LEVELS_ORDER.filter((l) => known.has(l)).concat([...known].filter((l) => !LEVELS_ORDER.includes(l)).sort());
     const list = levels.length ? levels : LEVELS_ORDER;
     const levelOpts = list.map((l) => optionHTML(l, state.adv.levels.has(l), `data-lvl="${esc(l)}"`)).join('');
-    return `<h4>Advanced Filters</h4>
+    return `<h4>Pay and Deadline</h4>
       <div class="field"><label>Level</label>${levelOpts}</div>
       <div class="field"><label for="advMinPay">Pay at least, per hour</label><input id="advMinPay" type="number" min="0" step="1" placeholder="Any" value="${esc(state.adv.minPay)}"></div>
       <div class="field"><label for="advWithin">Deadline within</label><select id="advWithin"><option value="">Any time</option>${[3, 7, 14]
@@ -371,7 +373,7 @@ export function createOverlay(host, api) {
       closePopover();
       return;
     }
-    showPopover(key, buildFilterPopoverHTML(key), btn, 'left');
+    showPopover(key, key === 'advanced' ? buildAdvancedHTML() : buildFilterPopoverHTML(key), btn, 'left');
   }
   function toggleSetValue(set, v) {
     if (set.has(v)) set.delete(v);
@@ -421,13 +423,21 @@ export function createOverlay(host, api) {
       closePopover();
     }
   });
+  // Every WaterlooWorks filter lives in its own Advanced Filters popup, so
+  // this button opens that popup instead of a smaller copy of it.
   advBtnEl.addEventListener('click', () => {
-    if (state.popoverKey === 'advanced' && popEl.classList.contains('show')) {
-      closePopover();
-      return;
-    }
-    showPopover('advanced', buildAdvancedHTML(), advBtnEl, 'right');
+    closePopover();
+    if (api.openAdvancedFilters) api.openAdvancedFilters();
   });
+  latestBtnEl.addEventListener('click', () => {
+    if (api.applyLatestFilters) api.applyLatestFilters();
+  });
+  origBtnEl.addEventListener('click', () => {
+    if (api.useOriginalLook) api.useOriginalLook();
+  });
+  function setLatestFilters(available) {
+    latestBtnEl.hidden = !available;
+  }
   searchesBtnEl.addEventListener('click', async () => {
     if (state.popoverKey === 'searches' && popEl.classList.contains('show')) {
       closePopover();
@@ -615,17 +625,14 @@ export function createOverlay(host, api) {
     const sortLabel = (COLUMNS.find((c) => c.key === state.sort.key) || {}).label || '';
     rescountEl.innerHTML = `${n} <span>${viewLabels[state.view]}${n !== viewTotal ? ` of ${viewTotal}` : ''}, sorted by ${esc(sortLabel)}</span>`;
   }
-  function updateAdvCount() {
-    const n = (state.adv.levels.size ? 1 : 0) + (state.adv.minPay ? 1 : 0) + (state.adv.within ? 1 : 0);
-    advCountEl.hidden = !n;
-    advCountEl.textContent = String(n);
+  function advCount() {
+    return (state.adv.levels.size ? 1 : 0) + (state.adv.minPay ? 1 : 0) + (state.adv.within ? 1 : 0);
   }
   function renderTable() {
     state.currentList = computeList();
     if (api.onOrder) api.onOrder(state.currentList.map((j) => j.jobId));
     renderResultCount();
     tbodyEl.innerHTML = state.currentList.length ? state.currentList.map(rowHTML).join('') : emptyRowHTML();
-    updateAdvCount();
   }
   function patchRowValues(job) {
     const tr = findRowEl(job.jobId);
@@ -1077,7 +1084,7 @@ export function createOverlay(host, api) {
   function onDocumentClick(e) {
     if (!popEl.classList.contains('show')) return;
     const path = e.composedPath();
-    if (path.includes(popEl) || path.includes(searchesBtnEl) || path.includes(advBtnEl)) return;
+    if (path.includes(popEl) || path.includes(searchesBtnEl)) return;
     if (path.some((el) => el instanceof Element && el.matches && el.matches('[data-pop]'))) return;
     closePopover();
   }
@@ -1124,7 +1131,7 @@ export function createOverlay(host, api) {
   function onAppScroll() {
     hideTip();
     if (popEl.classList.contains('show') && state.popoverAnchor) {
-      placePopover(popEl, state.popoverAnchor, state.popoverAnchor === advBtnEl || state.popoverAnchor === searchesBtnEl ? 'right' : 'left');
+      placePopover(popEl, state.popoverAnchor, state.popoverAnchor === searchesBtnEl ? 'right' : 'left');
     }
   }
   document.addEventListener('click', onDocumentClick);
@@ -1214,7 +1221,7 @@ export function createOverlay(host, api) {
   updateProgressUI();
   paintTheme();
 
-  return { setJobs, updateJob, setProgress, setProfile, destroy };
+  return { setJobs, updateJob, setProgress, setProfile, setLatestFilters, destroy };
 }
 
 function shellHTML() {
@@ -1226,6 +1233,7 @@ function shellHTML() {
       <h1>WaterlooWorks via WatWages</h1>
       <div class="right">
         <div class="views glass" role="group" aria-label="View" id="views"></div>
+        <button class="orig glass" id="origBtn" type="button">Use the original WaterlooWorks</button>
         <button class="theme glass" id="themeBtn" type="button"><span class="knob" id="themeKnob"></span><span id="themeLbl"></span></button>
       </div>
     </div>
@@ -1239,7 +1247,8 @@ function shellHTML() {
               <kbd>/</kbd>
             </label>
             <button class="btn" id="searchesBtn" type="button"><svg class="i"><use href="#i-saved"/></svg>My Searches</button>
-            <button class="btn dark" id="advBtn" type="button"><svg class="i"><use href="#i-sliders"/></svg>Advanced Filters<span class="count" id="advCount" hidden>0</span></button>
+            <button class="btn" id="latestBtn" type="button" hidden><svg class="i"><use href="#i-cycle"/></svg>Latest filters</button>
+            <button class="btn dark" id="advBtn" type="button"><svg class="i"><use href="#i-sliders"/></svg>Advanced Filters</button>
           </div>
           <div class="frow" id="chips" role="toolbar" aria-label="Quick filters"></div>
         </div>

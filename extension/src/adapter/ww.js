@@ -186,6 +186,32 @@ export function findAllJobsButton(doc) {
   return rail && rail.querySelector ? rail.querySelector('button') : null;
 }
 
+const ADVANCED_FILTER_LABELS = /^advanced (filters?|search)$/i;
+
+/** WaterlooWorks' own Advanced Filters button, which opens its filter popup, or null. */
+export function findAdvancedFiltersButton(doc) {
+  const root = doc || (typeof document !== 'undefined' ? document : null);
+  if (!root || typeof root.querySelectorAll !== 'function') return null;
+  for (const btn of root.querySelectorAll('button, a, [role="button"]')) {
+    const text = (btn.textContent || '').replace(/\s+/g, ' ').trim();
+    if (ADVANCED_FILTER_LABELS.test(text)) return btn;
+  }
+  return null;
+}
+
+/**
+ * Pure: the part of a results request that is the student's search, read
+ * from its form body. Two requests with equal keys show the same postings.
+ */
+export function listingSearchOf(body) {
+  if (!body) return { filters: null, keyword: '', key: 'null|' };
+  const params = new URLSearchParams(body);
+  const raw = params.get('filters');
+  const filters = raw && !['null', '[]', '{}', ''].includes(raw.trim()) ? raw : null;
+  const keyword = (params.get('keyword') || '').trim();
+  return { filters, keyword, key: `${filters || 'null'}|${keyword}` };
+}
+
 export function findResultsTable(doc) {
   const root = doc || (typeof document !== 'undefined' ? document : null);
   if (!root || typeof root.querySelectorAll !== 'function') return null;
@@ -508,6 +534,12 @@ export async function fetchListingRows(board, opts = {}) {
       action,
       isDataViewer: 'true',
     });
+  }
+  // A search the student set earlier (Latest filters) replaces the one the
+  // table last sent.
+  if (opts.search) {
+    params.set('filters', opts.search.filters || 'null');
+    params.set('keyword', opts.search.keyword || '');
   }
   const pageSize = parseInt(params.get('itemsPerPage') || params.get('postPerPage'), 10) || LISTING_PAGE_SIZE;
 

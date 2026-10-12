@@ -13,8 +13,8 @@ import * as ww from './adapter/ww.js';
 import { buildPostingDetail, findApplyUrl } from './adapter/detail.js';
 import { createQueue } from './adapter/queue.js';
 import { getCachedJobs, setCachedJob } from './store/cache.js';
-import { getSettings, getProfile, onSettingsChanged, onProfileChanged } from './store/settings.js';
-import { getMarks, setMark, onMarksChanged, getSavedSearches, saveSearch } from './store/marks.js';
+import { getSettings, setSettings, getProfile, onSettingsChanged, onProfileChanged } from './store/settings.js';
+import { getMarks, setMark, onMarksChanged, getSavedSearches, saveSearch, getLatestFilters, setLatestFilters } from './store/marks.js';
 
 import { parsePay, applyProfile } from './parse/pay.js';
 import { parseYear } from './parse/year.js';
@@ -115,7 +115,8 @@ export function baseJobFromRow(row, marks) {
 
 async function tryFullListing(board, onPage, maxPages) {
   try {
-    const rows = await ww.fetchListingRows(board, { onPage, maxPages });
+    const search = state && state.searchOverride ? state.searchOverride : undefined;
+    const rows = await ww.fetchListingRows(board, { onPage, maxPages, search });
     if (!rows || !rows.length) return null;
     return rows;
   } catch (err) {
@@ -147,11 +148,12 @@ async function readBoardRows(table, board) {
 // student can scroll and sort the first pages while the rest load.
 async function loadRestOfListing(board) {
   const mine = state;
+  const gen = mine.listingGen;
   mine.listingPending = true;
   pushProgress();
   let chain = Promise.resolve();
   const addPage = async (page) => {
-    if (state !== mine) return;
+    if (state !== mine || mine.listingGen !== gen) return;
     if (page.total != null) state.listingTotal = page.total;
     const fresh = page.rows.filter((row) => !state.jobs.has(row.jobId));
     // Rows already on screen pick up fresher list fields (applications, openings).
@@ -176,9 +178,168 @@ async function loadRestOfListing(board) {
     chain = chain.then(() => addPage(page)).catch(() => {});
   });
   await chain;
-  if (state !== mine) return;
+  if (state !== mine || mine.listingGen !== gen) return;
   state.listingPending = false;
   pushProgress();
+}
+
+// A new search (from WaterlooWorks' filter popup, or Latest filters)
+// replaces the list. The old rows stay on screen until the first page of
+// the new list arrives, and postings read before fill in from the cache, so
+// nothing is read twice.
+async function reloadListing() {
+  const mine = state;
+  const gen = (mine.listingGen += 1);
+  mine.listingPending = true;
+  mine.listingTotal = null;
+  pushProgress();
+  let replaced = false;
+  let chain = Promise.resolve();
+  const addPage = async (page) => {
+    if (state !== mine || mine.listingGen !== gen) return;
+    if (page.total != null) mine.listingTotal = page.total;
+    if (!replaced) {
+      replaced = true;
+      mine.jobs = new Map();
+    }
+    const fresh = page.rows.filter((row) => !mine.jobs.has(row.jobId));
+    for (const row of fresh) mine.jobs.set(row.jobId, baseJobFromRow(row, mine.marks));
+    mine.overlay.setJobs(Array.from(mine.jobs.values()));
+    const ids = await applyCache(fresh.map((row) => row.jobId));
+    if (state !== mine || mine.listingGen !== gen) return;
+    scheduleRescore();
+    mine.queue.add(ids);
+    pushProgress();
+  };
+  await tryFullListing(mine.board, (page) => {
+    chain = chain.then(() => addPage(page)).catch(() => {});
+  });
+  await chain;
+  if (state !== mine || mine.listingGen !== gen) return;
+  // No rows at all: the search matches nothing.
+  if (!replaced) {
+    mine.jobs = new Map();
+    mine.overlay.setJobs([]);
+  }
+  mine.listingPending = false;
+  pushProgress();
+  refreshLatestFilters();
+}
+
+/** The search the table is showing now: Latest filters if applied, else WaterlooWorks' last request. */
+async function currentSearch() {
+  if (state && state.searchOverride) {
+    const o = state.searchOverride;
+    return { filters: o.filters, keyword: o.keyword, key: `${o.filters || 'null'}|${o.keyword || ''}` };
+  }
+  const req = await ww.getListingRequest();
+  return ww.listingSearchOf(req && req.body);
+}
+
+// Remembers any search with a filter or keyword in it, and offers Latest
+// filters when the saved one differs from what is on screen.
+async function refreshLatestFilters() {
+  const mine = state;
+  if (!mine) return;
+  const now = await currentSearch();
+  if (now.filters || now.keyword) await setLatestFilters(mine.board, now);
+  const latest = await getLatestFilters(mine.board);
+  if (state !== mine) return;
+  const latestKey = latest ? `${latest.filters || 'null'}|${latest.keyword || ''}` : null;
+  mine.overlay.setLatestFilters(!!latest && latestKey !== now.key);
+}
+
+async function applyLatestFilters() {
+  const mine = state;
+  if (!mine) return;
+  const latest = await getLatestFilters(mine.board);
+  if (!latest || state !== mine) return;
+  mine.searchOverride = { filters: latest.filters, keyword: latest.keyword };
+  reportUsage('latest_filters');
+  await reloadListing();
+}
+
+// ---------------------------------------------------------------------
+// WaterlooWorks' own Advanced Filters popup
+// ---------------------------------------------------------------------
+// The overlay steps aside, the native page shows, and the popup opens. When
+// the student presses Apply, WaterlooWorks sends a new results request with
+// the filters in it; the overlay sees that request, comes back, and reloads
+// the list with it. A pill on the native page brings the overlay back if
+// they close the popup without applying.
+
+const BACK_ID = 'wmj-back-pill';
+const FILTER_POLL_MS = 400;
+
+function showBackPill(onBack) {
+  let el = document.getElementById(BACK_ID);
+  if (!el) {
+    el = document.createElement('button');
+    el.id = BACK_ID;
+    el.type = 'button';
+    el.textContent = 'Back to WatWages';
+    el.style.cssText = 'position:fixed;top:16px;right:16px;z-index:2147483647;padding:10px 16px;border:0;border-radius:999px;'
+      + 'background:#15171C;color:#F4F1EA;font:600 14px/1.2 system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25)';
+    document.body.appendChild(el);
+  }
+  el.onclick = onBack;
+}
+
+function hideBackPill() {
+  const el = document.getElementById(BACK_ID);
+  if (el) el.remove();
+}
+
+async function openAdvancedFilters() {
+  const mine = state;
+  if (!mine || mine.nativeFilters) return;
+  const before = await currentSearch();
+  const startReq = await ww.getListingRequest();
+  const startBody = startReq && startReq.body;
+  mine.nativeFilters = true;
+  mine.host.style.display = 'none';
+  restorePageContent(mine.hiddenNodes);
+  mine.hiddenNodes = null;
+
+  let timer = null;
+  const back = (applied) => {
+    if (timer) clearInterval(timer);
+    hideBackPill();
+    hideNotice();
+    if (state !== mine) return;
+    mine.nativeFilters = false;
+    mine.hiddenNodes = hidePageContent(mine.host);
+    mine.host.style.removeProperty('display');
+    if (applied) {
+      // The table's new request now carries the search, so Latest filters
+      // stops overriding it.
+      mine.searchOverride = null;
+      reloadListing();
+    }
+  };
+  showBackPill(() => back(false));
+  const btn = ww.findAdvancedFiltersButton();
+  if (btn) btn.click();
+  else showNotice("Open Advanced Filters on this page. WatWages comes back when you press Apply.");
+  reportUsage('advanced_filters', { found: !!btn });
+
+  timer = setInterval(async () => {
+    if (state !== mine) {
+      clearInterval(timer);
+      hideBackPill();
+      return;
+    }
+    const req = await ww.getListingRequest();
+    const body = req && req.body;
+    if (!body || body === startBody) return;
+    const now = ww.listingSearchOf(body);
+    if (now.key !== before.key || mine.searchOverride) back(true);
+  }, FILTER_POLL_MS);
+}
+
+function useOriginalLook() {
+  reportUsage('original_look', { from: 'overlay' });
+  setSettings({ overlayEnabled: false });
 }
 
 // Fields the board list carries that change while a posting is up. A fresh
@@ -439,6 +600,9 @@ function buildApi(board) {
     getSavedSearches: () => getSavedSearches(),
     saveSearch: (name, filters) => saveSearch(name, filters),
     openInWaterlooWorks: (jobId) => ww.openInWaterlooWorks(jobId, board),
+    openAdvancedFilters,
+    applyLatestFilters,
+    useOriginalLook,
     // The table's current order, top first, so reading follows what is on screen.
     onOrder: (ids) => {
       if (!state) return;
@@ -469,7 +633,10 @@ async function mount(board) {
   showNotice('Loading WatWages.');
   const { rows, source } = await readBoardRows(table, board);
   if (!rows) {
-    reportStatus('unreadable');
+    // With no table drawn yet the board is usually still on its search
+    // screen, which is normal, so boot keeps waiting and clicks All Jobs.
+    // Only a drawn table that cannot be read means WaterlooWorks changed.
+    reportStatus(table ? 'unreadable' : 'waiting');
     return false;
   }
 
@@ -497,6 +664,9 @@ async function mount(board) {
     listingSource: source,
     listingPending: false,
     listingTotal: null,
+    listingGen: 0,
+    searchOverride: null,
+    nativeFilters: false,
     order: new Map(),
     read: { done: 0, total: 0 },
   };
@@ -518,6 +688,7 @@ async function mount(board) {
   queue.add(idsToQueue);
   pushProgress();
   if (source === 'table' || source === 'feed') loadRestOfListing(board);
+  refreshLatestFilters();
 
   return true;
 }
@@ -551,6 +722,7 @@ async function applyCache(ids) {
 
 function teardown() {
   hideNotice();
+  hideBackPill();
   if (!state) return;
   try {
     state.queue.stop();

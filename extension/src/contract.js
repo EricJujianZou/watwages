@@ -34,6 +34,7 @@ export const STORAGE_KEYS = {
   cachePrefix: 'wmj.job.',
   marks: 'wmj.marks',
   savedSearches: 'wmj.savedSearches',
+  latestFilters: 'wmj.latestFilters',
 };
 
 export const MESSAGE_TAG = 'wmj';

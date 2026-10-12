@@ -1,13 +1,14 @@
 // Pure parser for the two things a student wants to know before opening a
 // posting: which named skills and tools it asks for, and which documents
-// the application package needs beyond a resume. No dependencies, runs in
-// a content script and in Node, like pay.js and year.js.
+// the application package needs beyond a resume. Its only import is the
+// HTML code decoder. Runs in a content script and in Node, like pay.js and year.js.
 //
 // Input is the posting overview (HTML or text). Both fields are read from
 // their own labelled section ("Required Skills:", "Application Documents
 // Required:"). getPostingData is searched as a fallback for the documents
 // list, since nobody on this project has seen whether the overview carries
 // the Application Information block or only the posting body.
+import { decodeEntities } from './entities.js';
 
 export const DEFAULT_RULES = {
   skillHeadings: ['required skills', 'skills required', 'required skills and qualifications', 'skills'],
@@ -95,7 +96,7 @@ function normalizeText(input) {
     t = t.replace(/<(?:br|\/p|\/div|\/li|\/tr|\/td|\/th|\/h[1-6]|\/dt|\/dd|\/section)\b[^>]*>/gi, '\n');
     t = t.replace(/<[^>]*>/g, ' ');
   }
-  t = t.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&eacute;/gi, 'é').replace(/&#43;/g, '+').replace(/&#35;/g, '#');
+  t = decodeEntities(t);
   t = t.replace(/ /g, ' ');
   t = t.replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
   t = t.replace(/[ \t]+/g, ' ');

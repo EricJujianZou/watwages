@@ -579,6 +579,7 @@ export function createOverlay(host, api) {
     const k = b.dataset.sort;
     state.sortedWhileLoading = !!(state.progress && state.progress.listing);
     state.sort = state.sort.key === k ? { key: k, dir: -state.sort.dir } : { key: k, dir: k === 'roi' || k === 'pay' ? -1 : 1 };
+    if (api.onSort) api.onSort(k);
     renderHead();
     renderTable();
   });

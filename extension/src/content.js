@@ -36,12 +36,12 @@ let bootRetryTimer = null;
 let rescoreTimer = null;
 
 // Tells the service worker what to show on the toolbar icon for this tab.
-function reportStatus(status, detail) {
+function reportStatus(status, detail, extra) {
   const key = status + '|' + (detail || '');
   if (key === lastStatus) return;
   lastStatus = key;
   try {
-    const sent = chrome.runtime.sendMessage({ tag: 'wmj', type: 'status', status, detail });
+    const sent = chrome.runtime.sendMessage({ tag: 'wmj', type: 'status', status, detail, extra });
     if (sent && sent.catch) sent.catch(() => {});
   } catch (err) {
     // the badge is a nicety, never let it break the page
@@ -517,7 +517,12 @@ function pushProgress() {
     });
   }
   if (state.listingPending) reportStatus('reading', 'all pages');
-  else if (done >= total) reportStatus('ready');
+  else if (done >= total) {
+    // How many postings the board had and how long reading them took, for the
+    // board-read count.
+    const seconds = state.mountedAt ? Math.round((Date.now() - state.mountedAt) / 1000) : null;
+    reportStatus('ready', undefined, { postings: total, seconds });
+  }
   else reportStatus('reading', `${done} of ${total}`);
 }
 
@@ -603,6 +608,13 @@ function buildApi(board) {
     openAdvancedFilters,
     applyLatestFilters,
     useOriginalLook,
+    // One count per column per page load, so a student flipping a sort back
+    // and forth counts once.
+    onSort: (column) => {
+      if (sortedColumns.has(column)) return;
+      sortedColumns.add(column);
+      reportUsage('sort', { column });
+    },
     // The table's current order, top first, so reading follows what is on screen.
     onOrder: (ids) => {
       if (!state) return;
@@ -631,6 +643,7 @@ async function mount(board) {
   if (!table) listingFallbackTried = true;
 
   showNotice('Loading WatWages.');
+  const mountedAt = Date.now();
   const { rows, source } = await readBoardRows(table, board);
   if (!rows) {
     // With no table drawn yet the board is usually still on its search
@@ -665,6 +678,7 @@ async function mount(board) {
     listingPending: false,
     listingTotal: null,
     listingGen: 0,
+    mountedAt,
     searchOverride: null,
     nativeFilters: false,
     order: new Map(),
@@ -747,6 +761,12 @@ function teardown() {
   state = null;
 }
 
+// Usage counts for the steps between opening a board and seeing it read,
+// sent once per page load. The service worker sends each at most once a day.
+const sortedColumns = new Set();
+let boardOpenReported = false;
+let boardStuckReported = false;
+
 async function boot() {
   const board = currentBoard();
   if (!board) return;
@@ -755,6 +775,14 @@ async function boot() {
     hideNotice();
     reportStatus('off');
     return;
+  }
+  if (!boardOpenReported) {
+    boardOpenReported = true;
+    reportUsage('board_open');
+  }
+  if (bootAttempts >= BOOT_MAX_ATTEMPTS && !ww.findResultsTable() && !boardStuckReported) {
+    boardStuckReported = true;
+    reportUsage('board_stuck');
   }
   if (!ww.findResultsTable() && listingFallbackTried && clickAllJobs()) {
     showNotice('Loading all jobs from WaterlooWorks.');

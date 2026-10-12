@@ -51,10 +51,14 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     if (msg.name === 'latest_filters') sendUsage('latest-filters');
     if (msg.name === 'advanced_filters') sendUsage('advanced-filters', { found: Boolean(extra.found) });
     if (msg.name === 'original_look') sendUsage('original-look', { from: String(extra.from || '') });
+    if (msg.name === 'board_open') onceADay('board-open');
+    if (msg.name === 'board_stuck') onceADay('board-stuck');
+    if (msg.name === 'sort') sendUsage('sort', { column: String(extra.column || '') });
     return;
   }
   if (msg.type !== 'status') return;
-  if (msg.status === 'ready') countBoardRead(sender.tab && sender.tab.id);
+  if (msg.status === 'starting') onceADay('ww-open');
+  if (msg.status === 'ready') countBoardRead(sender.tab && sender.tab.id, msg.extra);
   if (msg.status === 'unreadable' || msg.status === 'failed') onceADay('page-broken', { status: msg.status });
   const tabId = sender.tab && sender.tab.id;
   const badge = BADGE[msg.status];
@@ -72,11 +76,19 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 // Anonymous usage counts, sent to Eric's own analytics server so we can see
 // how many students install WatsWorthIt and whether they keep using it.
 // Every event carries a random install ID, the version, the install date and
-// how many days old the install is. Nothing about a posting, a search or a
-// setting is ever sent.
+// how many days old the install is. Nothing about a posting, or the words and
+// filters of a search, is ever sent.
 //
 //   install      once, when Chrome installs the extension
-//   board-read   the overlay finished reading a job board, once per tab
+//   ww-open      at most once per day, when any WaterlooWorks page opens
+//   board-open   at most once per day, when a job board page opens with the
+//                overlay turned on
+//   board-stuck  at most once per day, when the overlay gave up waiting for
+//                the results table and asked the student to click All Jobs
+//   board-read   the overlay finished reading a job board, once per tab, with
+//                how many postings it had and how many seconds reading took
+//   sort         the student sorted the table, with the column name, once per
+//                column per page load
 //   day-active   at most once per local day, on the first board read. The
 //                count of day-active events with day=7 is how many installs
 //                were still in use a week in, so breaking it down by the day
@@ -155,8 +167,14 @@ async function sendUsage(name, extra = {}) {
   }
 }
 
+// Two tabs can ask for the same count at once, before either has saved it,
+// so a count already claimed today in this service worker is skipped first.
+const claimedToday = new Map();
+
 async function onceADay(name, extra) {
   if (!fromStore()) return;
+  if (claimedToday.get(name) === today()) return;
+  claimedToday.set(name, today());
   try {
     const usage = await usageRecord();
     const sentOn = usage.sentOn || {};
@@ -168,10 +186,14 @@ async function onceADay(name, extra) {
   }
 }
 
-function countBoardRead(tabId) {
+function countBoardRead(tabId, extra) {
   if (tabId == null || boardReadTabs.has(tabId)) return;
   boardReadTabs.add(tabId);
-  sendUsage('board-read');
+  const { postings, seconds } = extra || {};
+  sendUsage('board-read', {
+    ...(Number.isFinite(postings) ? { postings } : {}),
+    ...(Number.isFinite(seconds) ? { seconds } : {}),
+  });
   onceADay('day-active');
 }
 

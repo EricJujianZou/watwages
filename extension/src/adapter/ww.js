@@ -860,6 +860,29 @@ export async function getListingRequest() {
   }
 }
 
+/**
+ * Runs WaterlooWorks' own Apply for a posting (see startApply in
+ * bridge-main.js). Resolves { started, modal }; started is false when the
+ * page has no Apply to call or the bridge did not answer.
+ */
+export async function startApply(jobId, title) {
+  try {
+    const got = await callPageFunction('wmjStartApply', [jobId, title || ''], { timeoutMs: 12000 });
+    return got && typeof got === 'object' ? got : { started: false };
+  } catch (err) {
+    return { started: false };
+  }
+}
+
+/** Whether WaterlooWorks' "additional step" apply popup is still open. */
+export async function applyModalOpen() {
+  try {
+    return !!(await callPageFunction('wmjApplyModalOpen', [], { timeoutMs: 2000 }));
+  } catch (err) {
+    return false;
+  }
+}
+
 export function getPostingOverview(jobId, opts) {
   return callPageFunction('getPostingOverview', [jobId], opts);
 }

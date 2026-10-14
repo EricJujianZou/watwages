@@ -576,9 +576,8 @@ function makeParsePay(defaultRules) {
     // undergraduates.
     const ordered = [...sentences].sort((a, b) => gradOnly(a) - gradOnly(b));
     for (const sentence of ordered) {
-      const lower = sentence.toLowerCase();
-      if (containsAny(lower, rules.ignoreWords)) continue;
       for (const money of findMoney(sentence, { currencyInSentence: mentionsCurrency(sentence, rules) })) {
+        if (containsAny(clauseAround(sentence, money).toLowerCase(), rules.ignoreWords)) continue;
         const { period, how, weeks, weeksStated } = findPeriod(sentence, money, scope, rules);
         const currency = findCurrency(money.marker, sentence, scope, rules, opts.countryHint);
         if (!inRange(money, period, hoursPerWeek, currency, rules, weeks)) continue;
@@ -601,6 +600,24 @@ function makeParsePay(defaultRules) {
     r.reason = findNotStatedReason(section, sentences, rules);
     return r;
   };
+}
+
+// The part of a sentence a figure sits in, cut at commas, semicolons, "and"
+// and "plus". "Salary USD $45/hr and relocation stipend" keeps the salary,
+// since the stipend is a separate clause from the $45.
+const CLAUSE_BREAK_RE = /[,;]|\s(?:and|plus|\+)\s/gi;
+function clauseAround(sentence, money) {
+  let start = 0;
+  let end = sentence.length;
+  CLAUSE_BREAK_RE.lastIndex = 0;
+  let m;
+  while ((m = CLAUSE_BREAK_RE.exec(sentence)) !== null) {
+    // A comma inside a number such as "$2,000" is not a break.
+    if (m[0] === ',' && /\d/.test(sentence[m.index - 1] || '') && /\d/.test(sentence[m.index + 1] || '')) continue;
+    if (m.index + m[0].length <= money.index) start = m.index + m[0].length;
+    else if (m.index >= money.end) { end = m.index; break; }
+  }
+  return sentence.slice(start, end);
 }
 
 /** Key of rules.notStatedReasons that explains a missing figure, or null. */

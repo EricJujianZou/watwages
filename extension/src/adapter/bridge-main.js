@@ -89,12 +89,78 @@
     };
   }
 
+  // WaterlooWorks' own table, a Vue app the page declares with
+  // "let dataViewerApp", so it is reachable by name but not on window.
+  function viewerApp() {
+    try {
+      // eslint-disable-next-line no-undef
+      return typeof dataViewerApp !== 'undefined' ? dataViewerApp : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  // Runs WaterlooWorks' own Apply for one posting, the same call its row
+  // menu makes (dataViewerApp.createApplication). That asks the server for
+  // the posting's application form, then either opens the apply page in a
+  // new tab or shows WaterlooWorks' "additional step" popup first. It looks
+  // the posting up in the rows its own table has loaded, which only covers
+  // the page of results on screen, so for any other posting this hands it
+  // the few fields its Apply code reads. Answers { started, modal } once the
+  // server replies, or { started: false } when the page has no such app.
+  function startApply(id, args) {
+    var app = viewerApp();
+    if (!app || typeof app.createApplication !== 'function') {
+      respond(id, { started: false }, null);
+      return;
+    }
+    var postingId = args[0];
+    var title = args[1] || '';
+    var done = false;
+    var stop = null;
+    var finish = function (result) {
+      if (done) return;
+      done = true;
+      if (stop) stop();
+      respond(id, result, null);
+    };
+    try {
+      app.selectedPostingRowAppData = undefined;
+      stop = app.$watch('selectedPostingRowAppData', function (got) {
+        if (got) finish({ started: true, modal: !!got.modalContent });
+      });
+      app.createApplication(postingId);
+      if (!app.selectedPostingRow) {
+        app.selectedPostingRow = {
+          id: postingId,
+          data: { JobTitle: { value: { postingTitle: title } }, hasApplication: { value: false } },
+        };
+      }
+    } catch (err) {
+      finish({ started: false, error: err && err.message ? err.message : String(err) });
+      return;
+    }
+    setTimeout(function () {
+      finish({ started: true, modal: false, unconfirmed: true });
+    }, 10000);
+  }
+
   window.addEventListener('message', function (event) {
     if (event.source !== window) return;
     var data = event.data;
     if (!data || data.tag !== TAG || data.direction !== 'request') return;
     if (data.type === 'wmjListingRequest') {
       respond(data.id, listingRequest, null);
+      return;
+    }
+    if (data.type === 'wmjStartApply') {
+      startApply(data.id, data.args || []);
+      return;
+    }
+    if (data.type === 'wmjApplyModalOpen') {
+      var shown = false;
+      try { shown = !!(viewerApp() && viewerApp().applyModal); } catch (err) { shown = false; }
+      respond(data.id, shown, null);
       return;
     }
     if (!ALLOWED[data.type]) return;

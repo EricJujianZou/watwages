@@ -34,7 +34,6 @@ const COLUMNS = [
   { key: 'pay', label: 'Pay', numeric: true },
   { key: 'loc', label: 'Location', cls: 'c-loc' },
   { key: 'interested', label: 'Interested', icon: true },
-  { key: 'open', label: 'Open in new tab', icon: true },
 ];
 
 export function createOverlay(host, api) {
@@ -612,12 +611,11 @@ export function createOverlay(host, api) {
       <td data-col="pay" class="c-n num">${cellPay(job)}</td>
       <td data-col="loc" class="c-loc loc" title="${esc([job.city, job.province, job.arrangement].filter(Boolean).join(', '))}">${locText}${job.arrangement ? `<small>${esc(job.arrangement)}</small>` : ''}</td>
       <td data-col="interested" class="ic"><button type="button" class="ib ${job.interested ? 'on' : ''}" data-toggle-interested aria-pressed="${!!job.interested}" aria-label="${job.interested ? 'Remove from Interested' : 'Mark as interested'}" title="${job.interested ? 'Interested' : 'Mark as interested'}">${icon('mark')}</button></td>
-      <td data-col="open" class="ic"><button type="button" class="ib" data-open-new aria-label="Open posting in a new tab" title="Open in new tab">${icon('ext')}</button></td>
     </tr>`;
   }
   function emptyRowHTML() {
     const msg = state.view === 'all' ? 'Remove a filter or clear the search to see more.' : 'Postings show up here once you mark them from All Jobs.';
-    return `<tr><td colspan="7" style="height:auto;white-space:normal;border-radius:12px;cursor:default"><div class="empty"><b>No postings match</b>${msg}</div></td></tr>`;
+    return `<tr><td colspan="${COLUMNS.length}" style="height:auto;white-space:normal;border-radius:12px;cursor:default"><div class="empty"><b>No postings match</b>${msg}</div></td></tr>`;
   }
   function renderResultCount() {
     const viewTotal = state.allJobs.filter(inView).length;
@@ -648,10 +646,6 @@ export function createOverlay(host, api) {
     if (!tr) return;
     if (e.target.closest('[data-toggle-interested]')) {
       toggleInterested(tr.dataset.id);
-      return;
-    }
-    if (e.target.closest('[data-open-new]')) {
-      api.openInWaterlooWorks(tr.dataset.id);
       return;
     }
     openPosting(tr.dataset.id);
@@ -687,12 +681,20 @@ export function createOverlay(host, api) {
     if (state.openId === jobId) patchPanelActions(job);
     toast(next ? 'Added to Interested' : 'Removed from Interested');
   }
-  function applyToJob(jobId) {
+  async function applyToJob(jobId) {
     const job = state.byId.get(jobId);
     if (!job) return;
-    const direct = !!job.applyUrl;
-    if (direct) window.open(job.applyUrl, '_blank', 'noopener');
-    else api.openInWaterlooWorks(jobId);
+    toast('Opening the application in WaterlooWorks.');
+    const how = api.applyInWaterlooWorks ? await api.applyInWaterlooWorks(jobId) : 'none';
+    let message = 'The application opened in a new WaterlooWorks tab.';
+    if (how === 'step') message = 'WaterlooWorks needs one more step before the application opens.';
+    else if (how === 'none' && job.applyUrl) {
+      window.open(job.applyUrl, '_blank', 'noopener');
+      message = "The employer's application page opened in a new tab.";
+    } else if (how === 'none') {
+      api.openInWaterlooWorks(jobId);
+      message = 'Find this posting in the new WaterlooWorks tab to apply.';
+    }
     if (!job.applied) {
       job.applied = true;
       try {
@@ -703,10 +705,9 @@ export function createOverlay(host, api) {
       renderViewsBar();
       if (state.view === 'applied') renderTable();
       if (state.openId === jobId) patchPanelActions(job);
-      toast(direct
-        ? "Marked as applied. The employer's application page opened in a new tab."
-        : 'Marked as applied. Continue applying in the new WaterlooWorks tab.');
+      message = `Marked as applied. ${message}`;
     }
+    toast(message);
   }
   function markViewed(jobId) {
     const job = state.byId.get(jobId);
@@ -925,7 +926,6 @@ export function createOverlay(host, api) {
         <span class="pos num">${idx >= 0 ? `${idx + 1} of ${state.currentList.length}` : 'Not in the current results'}</span>
         <button type="button" class="ib" data-step="-1" aria-label="Previous posting" ${idx <= 0 ? 'disabled' : ''}>${icon('up')}</button>
         <button type="button" class="ib" data-step="1" aria-label="Next posting" ${idx < 0 || idx >= state.currentList.length - 1 ? 'disabled' : ''}>${icon('down')}</button>
-        <button type="button" class="ib" data-open-new aria-label="Open posting in a new tab" title="Open in new tab">${icon('ext')}</button>
         <button type="button" class="ib" data-close aria-label="Close posting" title="Close">${icon('x')}</button>
       </div>
       <div class="pscroll">
@@ -953,10 +953,6 @@ export function createOverlay(host, api) {
     const stepBtn = e.target.closest('[data-step]');
     if (stepBtn) {
       step(+stepBtn.dataset.step);
-      return;
-    }
-    if (e.target.closest('[data-open-new]')) {
-      if (state.openId) api.openInWaterlooWorks(state.openId);
       return;
     }
     const tabBtn = e.target.closest('[data-tab]');
@@ -1264,7 +1260,7 @@ function shellHTML() {
           </div>
           <div class="progbar" id="progbar" hidden aria-hidden="true"><span></span></div>
           <table class="res" id="res">
-            <colgroup><col class="c-title"><col class="c-org"><col class="c-roi"><col class="c-pay"><col class="c-loc"><col class="c-int"><col class="c-tab"></colgroup>
+            <colgroup><col class="c-title"><col class="c-org"><col class="c-roi"><col class="c-pay"><col class="c-loc"><col class="c-int"></colgroup>
             <thead id="thead"></thead>
             <tbody id="tbody"></tbody>
           </table>

@@ -337,6 +337,44 @@ async function openAdvancedFilters() {
   }, FILTER_POLL_MS);
 }
 
+// Apply runs WaterlooWorks' own Apply for the posting. It answers how the
+// application went on: 'tab' when WaterlooWorks opened its apply page in a
+// new tab, 'step' when it showed its "additional step" popup (the table steps
+// aside until that popup closes), or 'none' when the page had no Apply to
+// call, so the caller can fall back to opening the board.
+async function applyInWaterlooWorks(jobId) {
+  const mine = state;
+  const job = mine && mine.jobs ? mine.jobs.get(jobId) : null;
+  const got = await ww.startApply(jobId, job && job.title);
+  reportUsage('apply', { native: !!got.started, step: !!got.modal });
+  if (!got.started) return 'none';
+  if (!got.modal || !mine || state !== mine || mine.nativeFilters) return 'tab';
+
+  mine.nativeFilters = true;
+  mine.host.style.display = 'none';
+  restorePageContent(mine.hiddenNodes);
+  mine.hiddenNodes = null;
+  let timer = null;
+  const back = () => {
+    if (timer) clearInterval(timer);
+    hideBackPill();
+    if (state !== mine) return;
+    mine.nativeFilters = false;
+    mine.hiddenNodes = hidePageContent(mine.host);
+    mine.host.style.removeProperty('display');
+  };
+  showBackPill(back);
+  timer = setInterval(async () => {
+    if (state !== mine) {
+      clearInterval(timer);
+      hideBackPill();
+      return;
+    }
+    if (!(await ww.applyModalOpen())) back();
+  }, FILTER_POLL_MS);
+  return 'step';
+}
+
 function useOriginalLook() {
   reportUsage('original_look', { from: 'overlay' });
   setSettings({ overlayEnabled: false });
@@ -605,6 +643,7 @@ function buildApi(board) {
     getSavedSearches: () => getSavedSearches(),
     saveSearch: (name, filters) => saveSearch(name, filters),
     openInWaterlooWorks: (jobId) => ww.openInWaterlooWorks(jobId, board),
+    applyInWaterlooWorks,
     openAdvancedFilters,
     applyLatestFilters,
     useOriginalLook,

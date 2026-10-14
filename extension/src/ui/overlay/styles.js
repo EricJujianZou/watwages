@@ -191,7 +191,7 @@ table.res tbody tr.sel{transform:translateY(-1px) scale(1.006); filter:drop-shad
 table.res tbody tr.sel td{background:var(--row-hover); box-shadow:inset 0 2px 0 var(--gold), inset 0 -2px 0 var(--gold)}
 table.res tbody tr.sel td:first-child{box-shadow:inset 2px 0 0 var(--gold), inset 0 2px 0 var(--gold), inset 0 -2px 0 var(--gold)}
 table.res tbody tr.sel td:last-child{box-shadow:inset -2px 0 0 var(--gold), inset 0 2px 0 var(--gold), inset 0 -2px 0 var(--gold)}
-col.c-title{width:auto} col.c-org{width:22%} col.c-roi{width:88px} col.c-pay{width:104px} col.c-loc{width:17%} col.c-int{width:52px} col.c-tab{width:48px}
+col.c-title{width:auto} col.c-org{width:22%} col.c-roi{width:88px} col.c-pay{width:104px} col.c-loc{width:17%} col.c-int{width:52px}
 .t{font-weight:600}
 .tagnew{font-size:10.5px; font-weight:700; letter-spacing:.02em; color:var(--blue); background:var(--blue-bg); padding:1px 6px; border-radius:6px; margin-right:7px; vertical-align:1px}
 td.viewed .t{font-weight:500; color:var(--ink2)}
